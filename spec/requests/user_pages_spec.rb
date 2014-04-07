@@ -71,7 +71,7 @@ describe "User Pages" do
         fill_in "Name",     with: new_name
         fill_in "Email",    with: new_email
         fill_in "Password", with: user.password
-        fill_in "Confirm Password", with: user.password
+        fill_in "Confirmation", with: user.password
         click_button "Save changes"
       end
 
@@ -87,9 +87,22 @@ describe "User Pages" do
 
       it {should have_content('error')}
     end
+
+    describe "forbidden attributes" do
+      let(:params) do
+        { user: {admin: true, password: user.password,
+                password_confirmation: user.password}}
+      end
+
+      before do
+        sign_in user, no_capybara: true
+        patch user_path(user), params
+      end
+      specify {expect(user.reload).not_to be_admin}
+    end
   end
 
-  describe "profile page" do
+  describe "profile Pages" do
   	let(:user) { FactoryGirl.create(:user)}
 
   	before {visit user_path(user)}
@@ -147,4 +160,21 @@ describe "User Pages" do
       end
   	end
   end
+
+  describe "delete user" do
+    describe "as admin user" do
+      let (:admin) {FactoryGirl.create(:admin)}
+
+      before { sign_in admin, no_capybara: true}
+      before {delete user_path(admin)}
+      it "submitting a DELETE request to the User#destroy action" do
+        expect do
+      #   specify { expect(response.body).not_to match(full_title('Edit user')) }
+          expect(response).to redirect_to(users_url)
+        end.not_to change(User, :count)
+      end
+    end
+  end
+
 end
+
