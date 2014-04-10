@@ -45,10 +45,7 @@ describe "Authentication" do
 	  		it {should have_link('Sign out', href:signout_path)}
 	  		it {should_not have_link('Sign in', href: signin_path)}
 
-	  		describe "unnecessary actions" do
-	  			before {visit new_user_path}
-	  			it {should have_content("Welcome to the Sample App")}
-	  		end
+	  		
 
 	  		describe "followed by signout" do
 	  			before {click_link "Sign out"}
@@ -58,8 +55,7 @@ describe "Authentication" do
 	end
 
 	describe "authorization" do
-
-	
+		
 		describe "as non-admin user" do
 			let(:user) { FactoryGirl.create(:user)}
 			let(:non_admin) { FactoryGirl.create(:user)}
@@ -70,6 +66,14 @@ describe "Authentication" do
 				before {delete user_path(user)}
 				specify { expect(response).to redirect_to(root_url)}
 			end
+
+			describe "submitting a NEW request" do
+	  			before do 
+	  				get new_user_path(user)
+	  			end
+	  			specify {expect(response).to redirect_to(root_url)}
+
+			end
 		end
 
 		describe "for non-signed-in users" do
@@ -77,6 +81,16 @@ describe "Authentication" do
 
 			it {should_not have_link('Settings', href:edit_user_path(user))}
 			it {should_not have_link('Profile', href:user_path(user))}
+
+			describe "in the Microposts controller" do
+				before { post microposts_path}
+				specify {expect(response).to redirect_to(signin_path)}				
+			end
+
+			describe "submitting to the destroy action" do
+				before {delete micropost_path(FactoryGirl.create(:micropost))}
+				specify { expect(response).to redirect_to(signin_path)}
+			end
 
 			describe "when attempting to visit a protected page" do
 				before do
